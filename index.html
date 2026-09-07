@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huawei Router & Switch Datasheet Explorer</title>
+<style>
+  :root{
+    --red:#c8102e;
+    --dark:#1a1a1a;
+    --gray:#f4f4f6;
+    --border:#e0e0e4;
+    --text:#2b2b2f;
+    --muted:#6b6b73;
+    --green:#3fa64d;
+    --blue:#2f7fd6;
+    --purple:#8551d1;
+    --orange:#e08a1e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI","Noto Sans Thai","Sarabun",Arial,sans-serif;
+    color:var(--text);
+    background:#fff;
+    line-height:1.6;
+  }
+  header{
+    background:linear-gradient(135deg,var(--red),#8a0d20);
+    color:#fff;
+    padding:34px 24px 54px;
+  }
+  header h1{margin:0 0 6px;font-size:24px;}
+  header p{margin:0;opacity:.9;font-size:13.5px;}
+
+  .search-wrap{
+    max-width:1000px;
+    margin:-30px auto 0;
+    padding:0 20px;
+    position:relative;
+    z-index:2;
+  }
+  .search-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 16px;
+    box-shadow:0 8px 22px rgba(0,0,0,.1);
+  }
+  .search-box input{
+    flex:1;border:none;outline:none;font-size:15px;font-family:inherit;color:var(--text);
+  }
+  .search-box svg{flex-shrink:0;color:var(--muted);}
+  .filters{
+    display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;
+  }
+  .filter-btn{
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--muted);
+    padding:6px 14px;
+    border-radius:999px;
+    font-size:12.5px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .filter-btn.active{
+    background:var(--red);
+    color:#fff;
+    border-color:var(--red);
+  }
+  #search-count{font-size:12.5px;color:var(--muted);margin-top:8px;padding:0 4px;}
+  #search-count b{color:var(--red);}
+
+  main{max-width:1000px;margin:0 auto;padding:20px 20px 60px;}
+
+  .section-title{
+    display:flex;align-items:center;gap:10px;
+    margin:40px 0 16px;font-size:19px;color:var(--red);
+    border-bottom:2px solid var(--red);padding-bottom:8px;
+  }
+
+  .grid{display:grid;grid-template-columns:1fr;gap:18px;}
+
+  .card{
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+    background:var(--gray);
+    transition:opacity .15s ease;
+  }
+  .card.hidden{display:none;}
+  .card-top{
+    display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:4px;
+  }
+  .card h3{margin:0;font-size:17px;color:var(--dark);}
+  .badge{
+    font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;color:#fff;white-space:nowrap;
+  }
+  .badge.router{background:var(--blue);}
+  .badge.switch{background:var(--green);}
+  .series-tag{font-size:11.5px;color:var(--muted);}
+  .card .desc{color:var(--muted);font-size:13px;margin:4px 0 14px;}
+
+  .panel-diagram{
+    background:#2c2c30;border-radius:8px;padding:14px;margin-bottom:14px;
+  }
+  .panel-group{margin-bottom:8px;}
+  .panel-group:last-child{margin-bottom:0;}
+  .panel-label{font-size:10.5px;color:#c9c9cf;margin-bottom:5px;letter-spacing:.3px;}
+  .panel-ports{display:flex;flex-wrap:wrap;gap:4px;}
+  .port{
+    width:20px;height:20px;border-radius:3px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:7.5px;color:#fff;flex-shrink:0;
+  }
+  .port.wide{width:34px;}
+  .p-green{background:var(--green);}
+  .p-blue{background:var(--blue);}
+  .p-purple{background:var(--purple);}
+  .p-orange{background:var(--orange);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:6px;overflow:hidden;margin-bottom:12px;}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);}
+  th{background:var(--dark);color:#fff;font-weight:600;width:42%;}
+  tr:last-child td, tr:last-child th{border-bottom:none;}
+
+  .link-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;}
+  a.doc-link{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12.5px;color:#fff;background:var(--red);
+    text-decoration:none;font-weight:600;padding:8px 14px;border-radius:7px;
+  }
+  a.doc-link:hover{opacity:.9;}
+  a.doc-link.secondary{background:#fff;color:var(--red);border:1px solid var(--red);}
+
+  mark{background:#ffe08a;color:inherit;border-radius:2px;padding:0 1px;}
+
+  #no-result{display:none;text-align:center;color:var(--muted);padding:40px 10px;font-size:14px;}
+  #hint{
+    text-align:center;color:var(--muted);padding:60px 10px;font-size:14.5px;
+  }
+  #hint svg{display:block;margin:0 auto 14px;opacity:.35;}
+  #hint b{color:var(--red);}
+  #device-count{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
+
+  .note{
+    background:#fff7e6;border:1px solid #ffe1a8;border-radius:8px;
+    padding:14px 16px;font-size:13.5px;color:#7a5b00;margin-top:34px;
+  }
+  footer{text-align:center;font-size:12px;color:var(--muted);padding:20px;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Huawei Router &amp; Switch Datasheet Explorer</h1>
+  <p>ค้นหารุ่นอุปกรณ์ — ดูสเปกจาก Datasheet, จำนวนพอร์ต, แผนภาพพอร์ต และลิงก์ดาวน์โหลด PDF ต้นฉบับ</p>
+</header>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input type="text" id="searchInput" placeholder="ค้นหารุ่น เช่น AR1220F, S5730, PoE, 48 port, AR6000 ...">
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+    <button class="filter-btn" data-filter="router">Router</button>
+    <button class="filter-btn" data-filter="switch">Switch</button>
+  </div>
+  <div id="search-count"></div>
+</div>
+
+<main>
+  <div id="hint">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    พิมพ์ชื่อรุ่น ซีรีส์ หรือฟีเจอร์ที่ต้องการค้นหาด้านบน<br>
+    เช่น <b>AR1220F</b>, <b>S5730</b>, <b>PoE</b>, <b>48 port</b>, <b>CloudEngine</b> — หรือเลือกหมวด Router / Switch
+    <div id="device-count"></div>
+  </div>
+  <div id="app"></div>
+  <div id="no-result">
+    <div>🔍 ไม่พบรุ่นนี้ในฐานข้อมูล — ลองค้นหาต่อจากแหล่งข้อมูลภายนอกได้เลย:</div>
+    <div class="link-row" id="fallback-links" style="justify-content:center;margin-top:14px;"></div>
+  </div>
+
+  <div class="note">
+    ⚠️ <strong>หมายเหตุ:</strong> รายการนี้ครอบคลุมรุ่นหลักของแต่ละซีรีส์ Router (AR100/120/160/1200/2200/6000) และ Switch
+    (S1700/S3700/S5700/S5730/S12700) ซึ่งเป็นเพียงส่วนหนึ่งของผลิตภัณฑ์ทั้งหมดที่ Huawei มี (มีหลายร้อยรุ่นย่อย/SKU)
+    ตัวเลขสเปกสรุปมาจาก Datasheet สาธารณะเพื่อการอ้างอิงเบื้องต้น แผนภาพพอร์ตเป็นภาพประกอบที่จัดทำขึ้นเอง
+    ไม่ใช่ภาพถ่ายจริงจากผู้ผลิต แนะนำให้ตรวจสอบสเปกล่าสุดและรูปสินค้าจริงจากเว็บทางการก่อนตัดสินใจจัดซื้อ:
+    <br><br>
+    🔗 <a class="doc-link secondary" href="https://e.huawei.com/en" target="_blank">e.huawei.com</a>
+    🔗 <a class="doc-link secondary" href="https://support.huawei.com/enterprise/en/index.html" target="_blank">support.huawei.com</a>
+  </div>
+</main>
+
+<footer>จัดทำขึ้นเพื่อการอ้างอิง — ควรตรวจสอบซ้ำกับ Datasheet ต้นฉบับก่อนใช้งานจริง</footer>
+
+<script>
+/* ============ ฐานข้อมูลอุปกรณ์ ============ */
+const DEVICES = [
+  // ---------------- ROUTERS ----------------
+  {
+    id:"ar109", category:"router", series:"AR100 Series", model:"AR109 / AR109W / AR109GW-L",
+    desc:"เราเตอร์ขนาดเล็กสำหรับสาขาย่อย (SOHO) รองรับ VDSL2/ADSL2+ และ Wi-Fi ในบางรุ่น",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"40 Mbps"},
+      {label:"Recommended Users", value:"20"},
+      {label:"USB / Console", value:"1x USB2.0 / 1x Console"},
+      {label:"Wi-Fi", value:"802.11 b/g/n (เฉพาะรุ่น W/GW-L)"}
+    ],
+    panel:[
+      {label:"WAN (1x VDSL2/ADSL2+ + 1x GE)", count:2, color:"p-blue"},
+      {label:"LAN (GE Switch Port)", count:4, color:"p-green"}
+    ],
+    pdf:"https://carrier.huawei.com/~/media/CNBG/Downloads/Product/Fixed%20Network/b2b/gateway/Huawei-AR100AR120-and-AR200-Series-Enterprise-Routers-Datasheet.pdf"
+  },
+  {
+    id:"ar121", category:"router", series:"AR120 Series", model:"AR121 / AR121W",
+    desc:"เราเตอร์ Fixed-interface สำหรับสำนักงานสาขาขนาดเล็ก",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"100 Mbps"},
+      {label:"Dimensions (H x W x D)", value:"44.5 x 300 x 220 mm"},
+      {label:"Wi-Fi (AR121W)", value:"802.11 b/g/n"}
+    ],
+    panel:[
+      {label:"WAN (1x FE)", count:1, color:"p-blue"},
+      {label:"LAN (4x FE)", count:4, color:"p-green"}
+    ],
+    pdf:"https://atlasgentech.co.nz/media/wysiwyg/pdf/Huawei/Routers/Huawei_AR120_AR150_AR160_and_AR200_Series_Enterprise_Routers_Datasheet.pdf"
+  },
+  {
+    id:"ar1220f", category:"router", series:"AR1200 Series", model:"AR1220F / AR1220F-S",
+    desc:"เราเตอร์สาขาระดับองค์กรยอดนิยม ใช้สำหรับ Branch office ขนาดกลาง รองรับ IPSec/GRE/DSVPN/L2TP VPN",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"400 Mbps"},
+      {label:"Firewall Performance", value:"1,800 Mbps"},
+      {label:"Device Switching Capacity", value:"8 Gbps"},
+      {label:"Slot Switching Bandwidth", value:"2 Gbps ต่อ SIC/WSIC"},
+      {label:"Recommended Users", value:"100"},
+      {label:"Dimensions (H x W x D)", value:"44.5 x 390 x 220 mm"}
+    ],
+    panel:[
+      {label:"WAN (2x GE, 1x Combo)", count:2, color:"p-blue"},
+      {label:"LAN (8x FE, ปรับเป็น WAN ได้)", count:8, color:"p-green"},
+      {label:"Slot (2x SIC)", count:2, color:"p-orange", wide:true}
+    ],
+    pdf:"https://carrier.huawei.com/~/media/CNBG/Downloads/Product/Fixed%20Network/b2b/gateway/Huawei-AR1200-Series-Enterprise-Routers-Data-Sheet.pdf"
+  },
+  {
+    id:"ar1220c", category:"router", series:"AR1200 Series", model:"AR1220C",
+    desc:"รุ่นย่อยของ AR1200 เน้นพอร์ต LAN แบบ GE ล้วน เหมาะสำหรับสาขาที่ต้องการความเร็วสูงขึ้น",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"200 Mbps"},
+      {label:"Firewall Performance", value:"1,000 Mbps"},
+      {label:"Device Switching Capacity", value:"8 Gbps"},
+      {label:"WSIC Slot (default/max)", value:"0 / 1"}
+    ],
+    panel:[
+      {label:"WAN (4x GE + 1x GE SFP)", count:5, color:"p-blue"},
+      {label:"LAN (8x GE, ปรับเป็น WAN ได้)", count:8, color:"p-green"},
+      {label:"Slot (2x SIC)", count:2, color:"p-orange", wide:true}
+    ],
+    pdf:"https://carrier.huawei.com/~/media/CNBG/Downloads/Product/Fixed%20Network/b2b/gateway/Huawei-AR1200-Series-Enterprise-Routers-Data-Sheet.pdf"
+  },
+  {
+    id:"ar1220ev", category:"router", series:"AR1200 Series", model:"AR1220E / AR1220EV",
+    desc:"รุ่นรองรับเสียง (Voice) ในตัว มี DSP 32 channel และ PoE บนพอร์ต LAN (รุ่น EV)",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"400 Mbps"},
+      {label:"Firewall Performance", value:"1,800 Mbps"},
+      {label:"DSP Channel", value:"32 channel (built-in, รุ่น EV)"},
+      {label:"PoE", value:"มี (รุ่น EV, ใช้ Power Adapter 100W)"}
+    ],
+    panel:[
+      {label:"WAN (2x GE Combo)", count:2, color:"p-blue"},
+      {label:"LAN (8x GE)", count:8, color:"p-green"},
+      {label:"Slot (2x SIC)", count:2, color:"p-orange", wide:true}
+    ],
+    pdf:"https://carrier.huawei.com/~/media/CNBG/Downloads/Product/Fixed%20Network/b2b/gateway/Huawei-AR1200-Series-Enterprise-Routers-Data-Sheet.pdf"
+  },
+  {
+    id:"ar2201-48fe", category:"router", series:"AR2200 Series", model:"AR2201-48FE",
+    desc:"Router+Switch integrated สำหรับสาขาที่ต้องการพอร์ต Fast Ethernet ความหนาแน่นสูง",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"200 Mbps"},
+      {label:"Firewall Performance", value:"900 Mbps"},
+      {label:"Recommended Users", value:"150"},
+      {label:"SIC Slot", value:"0"}
+    ],
+    panel:[
+      {label:"WAN (2x GE, 1x Combo)", count:2, color:"p-blue"},
+      {label:"LAN (48x FE)", count:48, color:"p-green"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-ar2200-series-enterprise-routers-datasheet.pdf"
+  },
+  {
+    id:"ar2204-27ge", category:"router", series:"AR2200 Series", model:"AR2204-27GE",
+    desc:"Router ระดับกลาง-สูง รองรับการ์ดเสียบขยายจำนวนมาก เหมาะสำหรับ HQ ขนาดกลาง",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"200 Mbps"},
+      {label:"Firewall Performance", value:"1.2 Gbps"},
+      {label:"Device Switching Capacity", value:"30 Gbps"},
+      {label:"SIC Slot", value:"4"}
+    ],
+    panel:[
+      {label:"WAN (3x GE, 1x Combo)", count:3, color:"p-blue"},
+      {label:"LAN (24x GE)", count:24, color:"p-green"},
+      {label:"Slot (4x SIC)", count:4, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-ar2200-series-enterprise-routers-datasheet.pdf"
+  },
+  {
+    id:"ar2204-51ge-p", category:"router", series:"AR2200 Series", model:"AR2204-51GE-P",
+    desc:"รุ่นท็อปของกลุ่ม 27/51GE เน้นความหนาแน่นพอร์ต GE สูงสุดในซีรีส์ AR2200",
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"200 Mbps"},
+      {label:"Firewall Performance", value:"1.2 Gbps"},
+      {label:"Device Switching Capacity", value:"50 Gbps"},
+      {label:"SIC Slot", value:"4"}
+    ],
+    panel:[
+      {label:"WAN (3x GE, 1x Combo)", count:3, color:"p-blue"},
+      {label:"LAN (48x GE)", count:48, color:"p-green"},
+      {label:"Slot (4x SIC)", count:4, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-ar2200-series-enterprise-routers-datasheet.pdf"
+  },
+  {
+    id:"ar3200", category:"router", series:"AR3200 Series", model:"AR3200 (Modular Chassis)",
+    desc:"เราเตอร์ระดับ Headquarters/Core แบบโมดูลาร์ รองรับการ์ดขยายความหลากหลายสูง (Ethernet, E1/T1, xDSL, CPOS, POS, LTE ฯลฯ) สำหรับองค์กรขนาดใหญ่",
+    specs:[
+      {label:"รูปแบบ", value:"Modular chassis (ไม่มีพอร์ต Fixed ตายตัว)"},
+      {label:"รองรับการ์ด", value:"SIC / WSIC / XSIC"},
+      {label:"การใช้งานหลัก", value:"Core router ของสำนักงานใหญ่ เชื่อมต่อ AR1200/AR2200 หลายสาขา"}
+    ],
+    panel:[
+      {label:"Slot ขยาย (ตามรุ่นแชสซี)", count:6, color:"p-orange", wide:true}
+    ],
+    pdf:"https://carrier.huawei.com/~/media/CNBG/Downloads/Product/Fixed%20Network/b2b/gateway/HUAWEI-AR3200-Series-Enterprise-Routersd-Datasheet.pdf"
+  },
+  {
+    id:"ar6121", category:"router", series:"AR6000 Series", model:"AR6121",
+    desc:"เราเตอร์ระดับ Enterprise ใช้ Multi-service Interface Card เหมาะสำหรับสาขาขนาดกลาง-ใหญ่",
+    specs:[
+      {label:"WAN Port", value:"2x GE Combo"},
+      {label:"Slot ขยาย", value:"2x SIC + 2x WSIC"}
+    ],
+    panel:[
+      {label:"WAN (2x GE Combo)", count:2, color:"p-blue"},
+      {label:"LAN (8x GE)", count:8, color:"p-green"},
+      {label:"Slot (2x SIC+2x WSIC)", count:4, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-ar6000-series-enterprise-routers-data-sheet.pdf"
+  },
+  {
+    id:"ar6140", category:"router", series:"AR6000 Series", model:"AR6140",
+    desc:"รุ่นสูงสุดของ AR6100 Series รองรับ Slot ขยายมากที่สุด เหมาะสำหรับ HQ ที่ต้องการการ์ดหลากหลายพร้อมกัน",
+    specs:[
+      {label:"WAN Port", value:"2x GE Combo"},
+      {label:"Slot ขยาย", value:"4x SIC + 2x WSIC + 1x XSIC"}
+    ],
+    panel:[
+      {label:"WAN (2x GE Combo)", count:2, color:"p-blue"},
+      {label:"LAN (8x GE)", count:8, color:"p-green"},
+      {label:"Slot (4 SIC+2 WSIC+1 XSIC)", count:7, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-ar6000-series-enterprise-routers-data-sheet.pdf"
+  },
+  {
+    id:"ar6300", category:"router", series:"AR6000 Series", model:"AR6300 (Modular Chassis)",
+    desc:"รุ่นสูงสุดของ AR6000 แบบโมดูลาร์เต็มรูปแบบ รองรับการ์ดขยายจำนวนมากที่สุดในซีรีส์ สำหรับ HQ/Data Center ขนาดใหญ่",
+    specs:[
+      {label:"รูปแบบ", value:"Modular chassis (ไม่มีพอร์ต Fixed ตายตัว)"},
+      {label:"รองรับการ์ด", value:"SIC / WSIC / XSIC จำนวนมาก ตามรุ่นแชสซี"}
+    ],
+    panel:[{label:"Slot ขยาย (ตามรุ่นแชสซี)", count:8, color:"p-orange", wide:true}],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-ar6000-series-enterprise-routers-data-sheet.pdf"
+  },
+  {
+    id:"ar161", category:"router", series:"AR160 Series", model:"AR161 / AR161F / AR161W / AR161FW",
+    desc:"เราเตอร์สาขาขนาดเล็ก-กลาง บางรุ่นรองรับ VDSL2 ในตัว (รุ่น F) และ Wi-Fi (รุ่น W)",
+    variants:["AR161","AR161F","AR161FG-L","AR161FGW-L","AR161FW","AR161G-L","AR161W","AR162F","AR168F","AR169","AR169F","AR169W","AR169FVW"],
+    specs:[
+      {label:"WAN Port", value:"1x GE (บางรุ่นมี VDSL2 ในตัว)"},
+      {label:"หมายเหตุ", value:"รุ่น F รองรับ VDSL2 access ความเร็วสูงสุด ~100Mbps ระยะ 800m"}
+    ],
+    panel:[
+      {label:"WAN (1x GE)", count:1, color:"p-blue"},
+      {label:"LAN (4x GE)", count:4, color:"p-green"}
+    ],
+    pdf:"https://www.alternetivo.cz/img.asp?attid=531134"
+  },
+  {
+    id:"ar1220w-family", category:"router", series:"AR1200 Series", model:"AR1220W / AR1220VW / AR1220EVW / AR1220-D",
+    desc:"กลุ่มรุ่นย่อยของ AR1220 ที่เพิ่มความสามารถ Wi-Fi/Voice DSP ในตัว โครงสร้างพอร์ตหลักใกล้เคียง AR1220E",
+    variants:["AR1220W","AR1220VW","AR1220EVW","AR1220-D"],
+    specs:[
+      {label:"WAN Speed (IMIX)", value:"AR1220EVW 400Mbps, รุ่นอื่น 200Mbps"},
+      {label:"Firewall Performance", value:"AR1220EVW 1,800Mbps, รุ่นอื่น 900Mbps"},
+      {label:"Wi-Fi", value:"802.11 b/g/n (รุ่น W/VW/EVW)"},
+      {label:"Dimensions (H x W x D)", value:"44 x 390 x 220 mm"}
+    ],
+    panel:[
+      {label:"WAN (2x GE Combo)", count:2, color:"p-blue"},
+      {label:"LAN (8x GE)", count:8, color:"p-green"},
+      {label:"Slot (2x SIC)", count:2, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.studocu.com/row/document/university-of-bahrain/huawei-hcia-datacom-v10/huawei-ar1200-series-enterprise-routers-datasheet/64514090"
+  },
+
+  // ---------------- SWITCHES ----------------
+  {
+    id:"s1700-28gfr", category:"switch", series:"S1700 Series", model:"S1700-28GFR-4P-AC",
+    desc:"Unmanaged/Web-managed switch ระดับเริ่มต้น เหมาะสำหรับสำนักงานขนาดเล็ก",
+    specs:[
+      {label:"Forwarding Performance", value:"42 Mpps"},
+      {label:"Switching Capacity", value:"56 Gbps"},
+      {label:"Power", value:"AC"}
+    ],
+    panel:[
+      {label:"Access (24x GE)", count:24, color:"p-green"},
+      {label:"Uplink (4x Gig SFP)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.hua-network.com/uploads/Huawei-S1700-Series-Switches-DataSheet.pdf"
+  },
+  {
+    id:"s1720-52gwr-pwr-4p", category:"switch", series:"S1700 Series", model:"S1720-52GWR-PWR-4P",
+    desc:"Switch พร้อม PoE+ ความหนาแน่นสูง เหมาะสำหรับติดตั้งกล้องวงจรปิด/AP จำนวนมาก",
+    specs:[
+      {label:"Forwarding Performance", value:"78 Mpps"},
+      {label:"Switching Capacity", value:"336 Gbps"},
+      {label:"PoE", value:"PoE+ (802.3at)"}
+    ],
+    panel:[
+      {label:"Access PoE+ (48x GE)", count:48, color:"p-green"},
+      {label:"Uplink (4x Gig SFP)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.scribd.com/document/351448268/Huawei-S1700-Switch-Data-Sheet-Detailed"
+  },
+  {
+    id:"s1720-28gwr-4x", category:"switch", series:"S1700 Series", model:"S1720-28GWR-4X",
+    desc:"Switch access ที่มี Uplink ความเร็วสูงแบบ 10G สำหรับงานที่ต้องการแบนด์วิดท์อัปลิงก์มากขึ้น",
+    specs:[
+      {label:"Forwarding Performance", value:"96 Mpps"},
+      {label:"Switching Capacity", value:"168 Gbps"}
+    ],
+    panel:[
+      {label:"Access (24x GE)", count:24, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.scribd.com/document/351448268/Huawei-S1700-Switch-Data-Sheet-Detailed"
+  },
+  {
+    id:"s3700-28tp-si", category:"switch", series:"S3700 Series", model:"S3700-28TP-SI",
+    desc:"Layer 2/3 access switch รุ่นกลาง รองรับพอร์ต Fast Ethernet พร้อม Gig SFP/Combo uplink",
+    specs:[
+      {label:"ประเภทพอร์ตหลัก", value:"10/100 Ethernet"},
+      {label:"Power Option", value:"AC / DC / PoE (รุ่น PWR)"}
+    ],
+    panel:[
+      {label:"Access (24x FE)", count:24, color:"p-green"},
+      {label:"Uplink (2x GE SFP)", count:2, color:"p-purple"},
+      {label:"Combo (2x GE/SFP)", count:2, color:"p-blue"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s3700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s5730-28c-si", category:"switch", series:"S5730-SI Series", model:"S5730-28C-SI",
+    desc:"Gigabit Layer 3 access switch ขนาด 24 พอร์ต พร้อม Uplink 10GE",
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Gigabit Access Switch"},
+      {label:"PoE", value:"ไม่มี"}
+    ],
+    panel:[
+      {label:"Access (24x GE)", count:24, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s5730-si-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s5730-48c-si", category:"switch", series:"S5730-SI Series", model:"S5730-48C-SI",
+    desc:"รุ่น 48 พอร์ตของ S5730-SI เหมาะสำหรับ Access layer ที่ต้องการความหนาแน่นพอร์ตสูง",
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Gigabit Access Switch"},
+      {label:"PoE", value:"ไม่มี"}
+    ],
+    panel:[
+      {label:"Access (48x GE)", count:48, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s5730-si-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s5730-48c-pwr-si", category:"switch", series:"S5730-SI Series", model:"S5730-48C-PWR-SI",
+    desc:"เหมือน S5730-48C-SI แต่เพิ่ม PoE+ สำหรับจ่ายไฟให้ AP/IP Phone/กล้อง",
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Gigabit Access Switch"},
+      {label:"PoE", value:"PoE+ (802.3at)"}
+    ],
+    panel:[
+      {label:"Access PoE+ (48x GE)", count:48, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s5730-si-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s5720-28x-si", category:"switch", series:"S5720-SI Series", model:"S5720-28X-SI / S5720-28P-SI",
+    desc:"Standard Layer 3 Gigabit switch รุ่น 24 พอร์ต รองรับ iStack และ MACsec เหมาะสำหรับ Access/Aggregation ของ Campus network",
+    variants:["S5720-28X-SI-AC","S5720-28P-SI","S5720-28X-PWR-SI"],
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Standard Gigabit Ethernet Switch"},
+      {label:"Uplink", value:"4x 10GE SFP+ (X series) หรือ 4x 1000BASE-X (P series)"},
+      {label:"Feature เด่น", value:"iStack, MACsec, SEP/ERPS ring protection"}
+    ],
+    panel:[
+      {label:"Access (24x GE, 4 ports dual-purpose)", count:24, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.hua-network.com/uploads/Huawei-S5720-SI-Series-Switches-Datasheet.pdf"
+  },
+  {
+    id:"s5720-52x-si", category:"switch", series:"S5720-SI Series", model:"S5720-52X-SI-AC",
+    desc:"รุ่น 48 พอร์ตของ S5720-SI พร้อม 10GE uplink ไม่มี extended slot",
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Standard Gigabit Ethernet Switch"},
+      {label:"Uplink", value:"4x 10GE SFP+ (รองรับ stack)"},
+      {label:"Extended Slot", value:"ไม่มี"}
+    ],
+    panel:[
+      {label:"Access (48x GE RJ45)", count:48, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.hua-network.com/uploads/Huawei-S5720-SI-Series-Switches-Datasheet.pdf"
+  },
+  {
+    id:"s5720-ei", category:"switch", series:"S5720-EI Series", model:"S5720-EI (เช่น S5720-28X-EI, S5720-56C-EI)",
+    desc:"Enhanced Gigabit switch รองรับพอร์ต GE ครบทุกแบบ (optical/electrical/combo) พร้อม extended slot สำหรับ์การ์ด uplink หรือ stack เพิ่มเติม",
+    variants:["S5720-28X-EI","S5720-52X-EI","S5720-56C-EI"],
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Enhanced Gigabit Ethernet Switch"},
+      {label:"Extended Slot", value:"1 slot สำหรับ uplink card หรือ stack card"},
+      {label:"Uplink พื้นฐาน", value:"2x 10GE SFP+ หรือ 2x 10GE RJ45"}
+    ],
+    panel:[
+      {label:"Access (24-48x GE)", count:24, color:"p-green"},
+      {label:"Uplink (2x 10GE)", count:2, color:"p-purple"},
+      {label:"Ext. Slot", count:1, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.karma-group.ru/upload/iblock/08c/Huawei%20S5720-EI%20Series%20Switches%20Product%20Datasheet.pdf"
+  },
+  {
+    id:"s5720-li", category:"switch", series:"S5720-LI Series", model:"S5720-LI (เช่น S5720-28X-PWH-LI, S5720-28X-LI)",
+    desc:"Simplified Gigabit switch ราคาประหยัด รองรับ PoE++ บางรุ่น มี EasyOperation สำหรับ Zero-touch deployment",
+    variants:["S5720-28X-LI","S5720-28X-PWH-LI"],
+    specs:[
+      {label:"ประเภท", value:"Simplified Gigabit Ethernet Switch"},
+      {label:"PoE", value:"PoE++ สูงสุด (บางรุ่น PWH)"},
+      {label:"Feature เด่น", value:"Huawei EasyOperation (Zero-touch deployment)"}
+    ],
+    panel:[
+      {label:"Access (24x GE)", count:24, color:"p-green"},
+      {label:"Uplink (4x SFP)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.hua-network.com/uploads/Huawei-S5720-LI-Series-Switches-Datasheet.pdf"
+  },
+  {
+    id:"s5735-s24p4x", category:"switch", series:"S5735-S Series (CloudEngine)", model:"S5735-S24P4X",
+    desc:"Access/Aggregation switch รุ่นใหม่ 24 พอร์ต PoE+ พร้อม 10GE uplink ประสิทธิภาพสูงกว่า S5720",
+    variants:["S5735-S24T4X","S5735-S48P4X","S5735-S48T4X"],
+    specs:[
+      {label:"Forwarding Performance", value:"96 Mpps"},
+      {label:"Switching Capacity", value:"128 Gbps"},
+      {label:"PoE", value:"PoE+ (รุ่น P)"}
+    ],
+    panel:[
+      {label:"Access PoE+ (24x GE)", count:24, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.slideshare.net/slideshow/huaweis5735s24p4xbrochuredatasheetpdf/264263934"
+  },
+  {
+    id:"s5735-l24p4x", category:"switch", series:"S5735-L Series (CloudEngine)", model:"S5735-L24P4X-A",
+    desc:"Simplified access switch สำหรับ Campus network / Gigabit to the desktop รองรับ iStack และ PoE+",
+    variants:["S5735-L24P4X-A1","S5735-L24T4S-A","S5735-L24T4X-A1"],
+    specs:[
+      {label:"ประเภท", value:"Simplified Gigabit Ethernet Switch"},
+      {label:"PoE", value:"PoE+ (รุ่น P)"},
+      {label:"Feature เด่น", value:"iStack, SEP/ERPS, Smart Link"}
+    ],
+    panel:[
+      {label:"Access PoE+ (24x GE)", count:24, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-cloudengine-s5735-l-switches-datasheet.pdf"
+  },
+  {
+    id:"s5700-28c-ei", category:"switch", series:"S5700-EI Series", model:"S5700-28C-EI",
+    desc:"Access/Aggregation switch พร้อม Extension slot ถอดเปลี่ยนการ์ดได้ ยืดหยุ่นสูง",
+    specs:[
+      {label:"Extension Slot", value:"2 slot (4x10GE หรือ 4x GE)"}
+    ],
+    panel:[
+      {label:"Fixed (24x GE)", count:24, color:"p-green"},
+      {label:"Ext. Slot", count:2, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s5700-ei-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s5700-52c-ei", category:"switch", series:"S5700-EI Series", model:"S5700-52C-EI",
+    desc:"รุ่น 48 พอร์ตของ S5700-EI สำหรับ Access/Aggregation ที่ต้องการความหนาแน่นสูงขึ้น",
+    specs:[
+      {label:"Extension Slot", value:"2 slot (4x10GE หรือ 4x GE)"}
+    ],
+    panel:[
+      {label:"Fixed (48x GE)", count:48, color:"p-green"},
+      {label:"Ext. Slot", count:2, color:"p-orange", wide:true}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s5700-ei-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s12704", category:"switch", series:"S12700 Series", model:"S12704",
+    desc:"Modular core/aggregation switch ขนาดเล็กสุดในตระกูล S12700 — 4 การ์ดสล็อต",
+    specs:[
+      {label:"จำนวน Slot การ์ด", value:"4"},
+      {label:"Switching Capacity", value:"สูงสุด 12.288 Tbit/s"}
+    ],
+    panel:[{label:"Card Slot", count:4, color:"p-orange", wide:true}],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s12700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s12708", category:"switch", series:"S12700 Series", model:"S12708",
+    desc:"Modular core switch ขนาดกลาง สำหรับ Campus network ขนาดใหญ่",
+    specs:[
+      {label:"จำนวน Slot การ์ด", value:"8"},
+      {label:"Switching Capacity", value:"สูงสุด 25.6 Tbit/s"}
+    ],
+    panel:[{label:"Card Slot", count:8, color:"p-orange", wide:true}],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s12700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s12712", category:"switch", series:"S12700 Series", model:"S12712",
+    desc:"Modular core switch ขนาดใหญ่ รองรับปริมาณการ์ดมากขึ้นสำหรับ Data Center/Core layer",
+    specs:[
+      {label:"จำนวน Slot การ์ด", value:"12"},
+      {label:"Switching Capacity", value:"สูงสุด 38.4 Tbit/s"}
+    ],
+    panel:[{label:"Card Slot", count:12, color:"p-orange", wide:true}],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s12700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s12716", category:"switch", series:"S12700 Series", model:"S12716",
+    desc:"รุ่นสูงสุดของ S12700 — Slot มากที่สุด สำหรับ Core network ระดับองค์กรขนาดใหญ่มาก",
+    specs:[
+      {label:"จำนวน Slot การ์ด", value:"16"},
+      {label:"Switching Capacity", value:"สูงสุด 51.2 Tbit/s"}
+    ],
+    panel:[{label:"Card Slot", count:16, color:"p-orange", wide:true}],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s12700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s2700", category:"switch", series:"S2700 Series", model:"S2700 (เช่น S2700-9TP, S2700-26TP, S2700-52P)",
+    desc:"Layer 2 access switch ระดับเริ่มต้น-กลาง สำหรับสำนักงาน/สาขาขนาดเล็ก ราคาประหยัด รองรับ 8–52 พอร์ตตามรุ่นย่อย",
+    variants:["S2700-9TP-EI","S2700-18TP-EI","S2700-26TP-EI","S2700-52P-EI"],
+    specs:[
+      {label:"ประเภท", value:"Layer 2 Fast/Gigabit Ethernet Switch"},
+      {label:"การใช้งาน", value:"Access layer สำนักงานขนาดเล็ก"}
+    ],
+    panel:[
+      {label:"Access (ตัวอย่าง 24x Ethernet)", count:24, color:"p-green"},
+      {label:"Uplink (2x GE/SFP)", count:2, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s2700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s6720-si", category:"switch", series:"S6700 Series", model:"S6720-SI",
+    desc:"Gigabit Layer 3 access switch ประสิทธิภาพสูงกว่า S5730 พร้อม Uplink 10GE ความหนาแน่นสูง",
+    specs:[
+      {label:"ประเภท", value:"Layer 3 Gigabit Access Switch"},
+      {label:"รุ่นย่อย", value:"24 พอร์ต / 48 พอร์ต"}
+    ],
+    panel:[
+      {label:"Access (48x GE)", count:48, color:"p-green"},
+      {label:"Uplink (4x 10GE SFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s6700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s6720-ei", category:"switch", series:"S6700 Series", model:"S6720-EI",
+    desc:"Aggregation switch รองรับพอร์ต 10GE เป็นพอร์ตหลัก พร้อม Uplink 40GE เหมาะสำหรับ Data Center/Core Campus",
+    specs:[
+      {label:"ประเภท", value:"10GE Access / 40GE Uplink"},
+      {label:"การใช้งาน", value:"Aggregation หรือ Core switch ใน Data Center"}
+    ],
+    panel:[
+      {label:"Access (24x 10GE SFP+)", count:24, color:"p-green"},
+      {label:"Uplink (4x 40GE QSFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s6700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s6720-hi", category:"switch", series:"S6700 Series", model:"S6720-HI",
+    desc:"IDN-Ready switch รองรับ 10G downstream และ Uplink สูงสุดถึง 40G/100G สำหรับ Core network ที่ต้องการความเร็วสูง",
+    specs:[
+      {label:"ประเภท", value:"10G Downstream / 40G+100G Upstream"},
+      {label:"Ethernet Network Processor", value:"Fully programmable (โปรแกรมได้)"}
+    ],
+    panel:[
+      {label:"Access (24x 10GE SFP+)", count:24, color:"p-green"},
+      {label:"Uplink (2x 100GE + 4x 40GE)", count:6, color:"p-purple"}
+    ],
+    pdf:"https://www.router-switch.com/media/upload/product-pdf/huawei-s6700-series-switches-datasheet.pdf"
+  },
+  {
+    id:"s6730-s24x6q", category:"switch", series:"S6700 Series (CloudEngine S6730-S)", model:"S6730-S24X6Q",
+    desc:"Full-featured 10GE switch รุ่นใหม่ ชื่อรุ่นระบุจำนวนพอร์ตตรง: 24x10GE downlink + 6x40GE uplink",
+    specs:[
+      {label:"ประเภท", value:"10GE Downlink / 40GE Uplink"},
+      {label:"ความหมายชื่อรุ่น", value:"24X = 24x10GE, 6Q = 6x40GE QSFP+"}
+    ],
+    panel:[
+      {label:"Downlink (24x 10GE)", count:24, color:"p-green"},
+      {label:"Uplink (6x 40GE QSFP+)", count:6, color:"p-purple"}
+    ],
+    pdf:"https://www.hi-network.com/huawei-s6730-series-switches-datasheet.html"
+  },
+  {
+    id:"s6730-h48x6c", category:"switch", series:"S6700 Series (CloudEngine S6730-H)", model:"S6730-H48X6C",
+    desc:"25GE-class switch สำหรับ Data Center/Core ที่ต้องการความหนาแน่นสูง — 48x10GE downlink + 6x40G/100G uplink",
+    specs:[
+      {label:"ประเภท", value:"10GE Downlink / 40G-100G Uplink"},
+      {label:"ความหมายชื่อรุ่น", value:"48X = 48x10GE, 6C = 6x40G/100G Combo"}
+    ],
+    panel:[
+      {label:"Downlink (48x 10GE)", count:48, color:"p-green"},
+      {label:"Uplink (6x 40G/100G)", count:6, color:"p-purple"}
+    ],
+    pdf:"https://www.hi-network.com/huawei-s6730-series-switches-datasheet.html"
+  },
+  {
+    id:"s7703", category:"switch", series:"S7700 Series", model:"S7703 / S7706",
+    desc:"High-end modular routing switch ใช้เป็น Aggregation/Core node บน Campus network หรือ Data center รองรับสูงสุด 480x 10GE ports ต่อระบบ",
+    variants:["S7703","S7706"],
+    specs:[
+      {label:"รูปแบบ", value:"Modular chassis (3-slot / 6-slot)"},
+      {label:"ความหนาแน่นสูงสุด", value:"รองรับได้ถึง 480x 10GE ports"},
+      {label:"Reliability", value:"99.999%"}
+    ],
+    panel:[{label:"Card Slot", count:6, color:"p-orange", wide:true}],
+    pdf:"https://www.teamtekwholesale.com/us/huawei-switches.html"
+  },
+  {
+    id:"s9703", category:"switch", series:"S9700 Series", model:"S9703 / S9706",
+    desc:"High-end core switch สำหรับ Data Center ขนาดใหญ่ รองรับความหนาแน่นพอร์ต 10GE/40GE สูงและ Reliability ระดับ Carrier-class",
+    variants:["S9703","S9706","S9712"],
+    specs:[
+      {label:"รูปแบบ", value:"Modular chassis หลายขนาด Slot"},
+      {label:"การใช้งาน", value:"Data Center Core switch"}
+    ],
+    panel:[{label:"Card Slot", count:6, color:"p-orange", wide:true}],
+    pdf:"https://www.teamtekwholesale.com/us/huawei-switches.html"
+  },
+  {
+    id:"ce6850-48s4q", category:"switch", series:"CloudEngine CE6800 Series", model:"CE6850-48S4Q-EI",
+    desc:"Data Center ToR switch ความหนาแน่นสูง ชื่อรุ่นระบุพอร์ตตรง: 48x10GE + 4x40GE",
+    specs:[
+      {label:"ความหมายชื่อรุ่น", value:"48S = 48x10GE SFP+, 4Q = 4x40GE QSFP+"},
+      {label:"การใช้งาน", value:"Top-of-Rack switch ใน Data Center"}
+    ],
+    panel:[
+      {label:"Downlink (48x 10GE SFP+)", count:48, color:"p-green"},
+      {label:"Uplink (4x 40GE QSFP+)", count:4, color:"p-purple"}
+    ],
+    pdf:"https://www.hi-network.com/support/datasheet-download/huawei"
+  },
+  {
+    id:"ce8800", category:"switch", series:"CloudEngine CE8800 Series", model:"CE8800 (เช่น CE8850, CE8861)",
+    desc:"Data Center Core/Spine switch ความหนาแน่นสูง รองรับพอร์ต 40GE/100GE จำนวนมาก สำหรับ Data Center ขนาดใหญ่",
+    specs:[
+      {label:"ประเภทพอร์ตหลัก", value:"40GE / 100GE"},
+      {label:"การใช้งาน", value:"Data Center Spine/Core switch"}
+    ],
+    panel:[
+      {label:"Uplink/Downlink (32x 100GE)", count:32, color:"p-purple"}
+    ],
+    pdf:"https://e.huawei.com/en"
+  },
+  {
+    id:"ce12800", category:"switch", series:"CloudEngine CE12800 Series", model:"CE12800 (เช่น CE12804, CE12808, CE12812, CE12816)",
+    desc:"Modular Core/Spine switch ระดับสูงสุดสำหรับ Data Center ขนาดใหญ่มาก โครงสร้างคล้าย S12700 แต่เน้นพอร์ต 40GE/100GE",
+    variants:["CE12804","CE12808","CE12812","CE12816"],
+    specs:[
+      {label:"รูปแบบ", value:"Modular chassis 4/8/12/16 slot"},
+      {label:"ประเภทพอร์ตหลัก", value:"10GE / 40GE / 100GE"}
+    ],
+    panel:[{label:"Card Slot (ตามรุ่น)", count:8, color:"p-orange", wide:true}],
+    pdf:"https://e.huawei.com/en"
+  }
+];
+
+/* ============ Render ============ */
+const app = document.getElementById('app');
+
+function panelHTML(groups){
+  return groups.map(g => {
+    const n = Math.min(g.count, 52); // จำกัดจำนวนกล่องที่วาดไม่ให้ล้นเกินไป
+    let ports = '';
+    for(let i=1;i<=n;i++){
+      ports += `<div class="port ${g.color}${g.wide?' wide':''}">${g.wide? i : (n>24?'':i)}</div>`;
+    }
+    return `<div class="panel-group">
+      <div class="panel-label">${g.label}</div>
+      <div class="panel-ports">${ports}</div>
+    </div>`;
+  }).join('');
+}
+
+function specRows(specs){
+  return specs.map(s => `<tr><th>${s.label}</th><td>${s.value}</td></tr>`).join('');
+}
+
+function renderDevice(d){
+  const variantsHTML = d.variants ? `<div class="desc"><strong>รุ่นย่อยที่เกี่ยวข้อง:</strong> ${d.variants.join(', ')}</div>` : '';
+  return `
+  <div class="card" data-id="${d.id}" data-category="${d.category}">
+    <div class="card-top">
+      <h3>${d.model}</h3>
+      <span class="badge ${d.category}">${d.category === 'router' ? 'Router' : 'Switch'}</span>
+    </div>
+    <div class="series-tag">${d.series}</div>
+    <div class="desc">${d.desc}</div>
+    ${variantsHTML}
+    <div class="panel-diagram">${panelHTML(d.panel)}</div>
+    <table>${specRows(d.specs)}</table>
+    <div class="link-row">
+      <a class="doc-link" href="${d.pdf}" target="_blank">⬇️ ดาวน์โหลด Datasheet PDF</a>
+    </div>
+  </div>`;
+}
+
+app.innerHTML = `
+  <div class="section-title">📡 Routers (AR Series)</div>
+  <div class="grid" id="grid-router">
+    ${DEVICES.filter(d=>d.category==='router').map(renderDevice).join('')}
+  </div>
+  <div class="section-title">🔀 Switches (S Series)</div>
+  <div class="grid" id="grid-switch">
+    ${DEVICES.filter(d=>d.category==='switch').map(renderDevice).join('')}
+  </div>
+`;
+
+/* ============ Search + Filter ============ */
+const cards = Array.from(document.querySelectorAll('.card'));
+const originalHTML = cards.map(c => c.innerHTML);
+const input = document.getElementById('searchInput');
+const countEl = document.getElementById('search-count');
+const noResultEl = document.getElementById('no-result');
+const hintEl = document.getElementById('hint');
+const appEl = document.getElementById('app');
+const sectionTitles = document.querySelectorAll('.section-title');
+const filterBtns = document.querySelectorAll('.filter-btn');
+let activeFilter = 'all';
+
+document.getElementById('device-count').textContent = `ฐานข้อมูลทั้งหมด ${DEVICES.length} รุ่น/กลุ่มรุ่น`;
+
+function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function highlight(root, term){
+  if(!term) return;
+  const regex = new RegExp('(' + escapeRegExp(term) + ')', 'gi');
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node){
+      if(node.parentNode.tagName === 'SCRIPT' || node.parentNode.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  let n;
+  while(n = walker.nextNode()){ if(n.nodeValue.trim()) nodes.push(n); }
+  nodes.forEach(node => {
+    if(regex.test(node.nodeValue)){
+      regex.lastIndex = 0;
+      const span = document.createElement('span');
+      span.innerHTML = node.nodeValue.replace(regex, '<mark>$1</mark>');
+      node.parentNode.replaceChild(span, node);
+    }
+  });
+}
+
+function runSearch(){
+  const term = input.value.trim();
+  const isBrowsing = term !== '' || activeFilter !== 'all';
+
+  if(!isBrowsing){
+    hintEl.style.display = '';
+    appEl.style.display = 'none';
+    noResultEl.style.display = 'none';
+    countEl.innerHTML = '';
+    return;
+  }
+  hintEl.style.display = 'none';
+  appEl.style.display = '';
+
+  let visibleCount = 0;
+
+  cards.forEach((card, i) => {
+    card.innerHTML = originalHTML[i];
+    const text = card.textContent.toLowerCase();
+    const matchesTerm = term === '' || text.includes(term.toLowerCase());
+    const matchesFilter = activeFilter === 'all' || card.dataset.category === activeFilter;
+    const match = matchesTerm && matchesFilter;
+
+    card.classList.toggle('hidden', !match);
+    if(match){
+      visibleCount++;
+      if(term) highlight(card, term);
+    }
+  });
+
+  sectionTitles.forEach(title => {
+    let el = title.nextElementSibling;
+    let anyVisible = false;
+    while(el && !el.classList.contains('section-title')){
+      if(el.classList.contains('grid')){
+        anyVisible = Array.from(el.children).some(c => !c.classList.contains('hidden'));
+      }
+      el = el.nextElementSibling;
+    }
+    title.style.display = anyVisible ? '' : 'none';
+    if(title.nextElementSibling) title.nextElementSibling.style.display = anyVisible ? '' : 'none';
+  });
+
+  noResultEl.style.display = visibleCount === 0 ? 'block' : 'none';
+  if(visibleCount === 0 && term){
+    const q = encodeURIComponent('Huawei ' + term + ' datasheet');
+    document.getElementById('fallback-links').innerHTML = `
+      <a class="doc-link" href="https://www.google.com/search?q=${q}" target="_blank">🌐 ค้นหา "${term}" ใน Google</a>
+      <a class="doc-link secondary" href="https://support.huawei.com/enterprise/en/search/NA-1?q=${encodeURIComponent(term)}" target="_blank">🔎 ค้นหาใน support.huawei.com</a>
+    `;
+  }
+  countEl.innerHTML = term === '' ? '' : `พบ <b>${visibleCount}</b> รายการที่ตรงกับ "${term}"`;
+}
+
+input.addEventListener('input', runSearch);
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    runSearch();
+  });
+});
+
+runSearch(); // ตั้งค่าเริ่มต้น: ซ่อนรายการทั้งหมด แสดงเฉพาะคำแนะนำจนกว่าจะค้นหา
+</script>
+
+</body>
+</html>
